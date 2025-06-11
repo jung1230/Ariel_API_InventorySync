@@ -1,0 +1,6 @@
+App.config
+
+# Visual Studio cache
+.vs/
+*.user
+*.suo
