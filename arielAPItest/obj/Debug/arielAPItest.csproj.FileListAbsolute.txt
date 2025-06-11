@@ -1,8 +1,0 @@
-C:\Users\AlanC\source\repos\arielAPItest\arielAPItest\obj\Debug\arielAPItest.csproj.AssemblyReference.cache
-C:\Users\AlanC\source\repos\arielAPItest\arielAPItest\obj\Debug\arielAPItest.csproj.CoreCompileInputs.cache
-C:\Users\AlanC\source\repos\arielAPItest\arielAPItest\bin\Debug\arielAPItest.exe.config
-C:\Users\AlanC\source\repos\arielAPItest\arielAPItest\bin\Debug\arielAPItest.exe
-C:\Users\AlanC\source\repos\arielAPItest\arielAPItest\bin\Debug\arielAPItest.pdb
-C:\Users\AlanC\source\repos\arielAPItest\arielAPItest\obj\Debug\arielAPItest.exe
-C:\Users\AlanC\source\repos\arielAPItest\arielAPItest\obj\Debug\arielAPItest.pdb
-C:\Users\AlanC\source\repos\arielAPItest\arielAPItest\obj\Debug\arielAPItest.exe.config
