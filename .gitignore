@@ -1,6 +1,11 @@
+bin/
+obj/
 App.config
 
 # Visual Studio cache
 .vs/
 *.user
 *.suo
+
+Inventory_Report.csv
+ItemList.json
