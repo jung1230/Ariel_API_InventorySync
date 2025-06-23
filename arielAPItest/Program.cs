@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Configuration; // For future DB connection
+using System.Data.SqlClient;
 
 class Program
 {
