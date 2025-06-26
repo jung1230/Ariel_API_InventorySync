@@ -13,53 +13,52 @@ class Program
     {
         try
         {
-            // Load list of product IDs from JSON file
+            // Load both JSON files
             var productIds = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText("ItemList.json"));
             var credentials = JsonConvert.DeserializeObject<Secrets>(File.ReadAllText("secret.json"));
 
             // Load database connection string
             string connStr = $"Server={credentials.DbServer};Database={credentials.DbName};User Id={credentials.DbUser};Password={credentials.DbPassword};";
 
-            // Create the API client once
+            // Create the API client
             var client = new InventoryServiceClient();
 
-            foreach (var productId in productIds)
+            using (SqlConnection conn = new SqlConnection(connStr))
             {
-                try
+                conn.Open();
+
+                foreach (var productId in productIds)
                 {
-                    // Build the API request
-                    var request = new GetInventoryLevelsRequest
+                    try
                     {
-                        wsVersion = wsVersion.Item200,
-                        id = credentials.APISenderId,
-                        password = credentials.APIPassword,
-                        productId = productId
-                    };
+                        // Build the API request
+                        var request = new GetInventoryLevelsRequest
+                        {
+                            wsVersion = wsVersion.Item200,
+                            id = credentials.APISenderId,
+                            password = credentials.APIPassword,
+                            productId = productId
+                        };
 
-                    // Make the API call
-                    var response = client.getInventoryLevels(request);
+                        // Make the API call
+                        var response = client.getInventoryLevels(request);
 
-                    // Validate response
-                    if (response?.Inventory == null || response.Inventory.PartInventoryArray == null)
-                    {
-                        Console.WriteLine($"------------------------------------------\nNo inventory data found for Product ID: {productId}");
-                        continue;
-                    }
+                       
+                        if (response?.Inventory == null || response.Inventory.PartInventoryArray == null)
+                        {
+                            Console.WriteLine($"------------------------------------------\nNo inventory data found for Product ID: {productId}");
+                            continue;
+                        }
 
-                    // comment out the next line if you don't want to see the raw response
-                    Console.WriteLine($"------------------------------------------\nRetrieved inventory for Product: {response.Inventory.productId}");
+                        Console.WriteLine($"------------------------------------------\nRetrieved inventory for Product: {response.Inventory.productId}");
 
-
-                    using (SqlConnection conn = new SqlConnection(connStr))
-                    {
-                        conn.Open();
                         foreach (var part in response.Inventory.PartInventoryArray)
                         {
                             string normalizedId = Program.NormalizePartId(part.partId);
-                            // comment out the next line if you don't want to see the raw response
-                            Console.WriteLine($"**************************\nPart ID: {part.partId}");
-                            //Console.WriteLine($" - Normalize: {normalizedId}");
-                            Console.WriteLine($"Qty: {part.quantityAvailable.Quantity.value}");
+                            //// comment out the next line if you don't want to see the raw response
+                            //Console.WriteLine($"**************************\nPart ID: {part.partId}");
+                            ////Console.WriteLine($" - Normalize: {normalizedId}");
+                            //Console.WriteLine($"Qty: {part.quantityAvailable.Quantity.value}");
 
 
                             // get the whole VendorItemID based on normalized partId
@@ -67,9 +66,7 @@ class Program
                                     SELECT TOP 1 VendorItemID 
                                     FROM ItemList 
                                     WHERE VendorItemID LIKE @NormalizedId + '%'", conn);
-
                             checkVendorItemID.Parameters.AddWithValue("@NormalizedId", normalizedId);
-
                             object VendorItemID = checkVendorItemID.ExecuteScalar();
 
                             if (VendorItemID != null)
@@ -108,17 +105,15 @@ class Program
                             {
                                 Console.WriteLine($"Not Found in Ariel DB: {normalizedId}");
                             }
-
-
-
                         }
+
+                        // Optional delay to avoid overwhelming the API
+                        Thread.Sleep(200);
                     }
-                    // Optional delay to avoid overwhelming the API
-                    Thread.Sleep(200);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error for Product ID {productId}: {ex.Message}");
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error for Product ID {productId}: {ex.Message}");
+                    }
                 }
             }
 
@@ -141,7 +136,7 @@ class Program
             return $"{parts[0]}-{parts[1]}";  // e.g., AC102-01
         }
 
-        return cleaned; // fallback
+        return cleaned; 
     }
 }
 
@@ -155,4 +150,3 @@ public class Secrets
     public string DbUser { get; set; }
     public string DbPassword { get; set; }
 }
-
