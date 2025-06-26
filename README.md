@@ -27,7 +27,7 @@ Create a secret.json file in the same folder as the executable, with the followi
   "DbUser": "your_username",
   "DbPassword": "your_password"
 }
-
+```
 ## ItemList.json
 This file should contain a list of product IDs to request inventory data for.
 
