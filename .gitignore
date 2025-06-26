@@ -8,4 +8,4 @@ App.config
 *.suo
 
 Inventory_Report.csv
-ItemList.json
+secret.json

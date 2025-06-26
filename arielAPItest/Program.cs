@@ -42,56 +42,77 @@ class Program
                     // Validate response
                     if (response?.Inventory == null || response.Inventory.PartInventoryArray == null)
                     {
-                        Console.WriteLine($"No inventory data found for Product ID: {productId}");
+                        Console.WriteLine($"------------------------------------------\nNo inventory data found for Product ID: {productId}");
                         continue;
                     }
 
                     // comment out the next line if you don't want to see the raw response
                     Console.WriteLine($"------------------------------------------\nRetrieved inventory for Product: {response.Inventory.productId}");
 
-                    foreach (var part in response.Inventory.PartInventoryArray)
+
+                    using (SqlConnection conn = new SqlConnection(connStr))
                     {
-                        string normalizedId = Program.NormalizePartId(part.partId);
-                        // comment out the next line if you don't want to see the raw response
-                        //Console.WriteLine($" - Part ID: {part.partId}");
-                        //Console.WriteLine($" - Normalize: {normalizedId}");
-                        //Console.WriteLine($"   Qty: {part.quantityAvailable.Quantity.value}");
-
-
-                        using (SqlConnection conn = new SqlConnection(connStr))
+                        conn.Open();
+                        foreach (var part in response.Inventory.PartInventoryArray)
                         {
-                            conn.Open();
-
-                            // test connection(checked)
-                            //using (SqlCommand testCmd = new SqlCommand("SELECT 1", conn))
-                            //{
-                            //    testCmd.ExecuteScalar();
-                            //}
-                            //Console.WriteLine(" SQL Server connection test passed.");
+                            string normalizedId = Program.NormalizePartId(part.partId);
+                            // comment out the next line if you don't want to see the raw response
+                            Console.WriteLine($"**************************\nPart ID: {part.partId}");
+                            //Console.WriteLine($" - Normalize: {normalizedId}");
+                            Console.WriteLine($"Qty: {part.quantityAvailable.Quantity.value}");
 
 
-                            SqlCommand checkCmd = new SqlCommand(@"
-                                SELECT TOP 1 VendorItemID 
-                                FROM ItemList 
-                                WHERE VendorItemID LIKE @NormalizedId + '%'", conn);
+                            // get the whole VendorItemID based on normalized partId
+                            SqlCommand checkVendorItemID = new SqlCommand(@"
+                                    SELECT TOP 1 VendorItemID 
+                                    FROM ItemList 
+                                    WHERE VendorItemID LIKE @NormalizedId + '%'", conn);
 
-                            checkCmd.Parameters.AddWithValue("@NormalizedId", normalizedId);
+                            checkVendorItemID.Parameters.AddWithValue("@NormalizedId", normalizedId);
 
-                            object result = checkCmd.ExecuteScalar();
+                            object VendorItemID = checkVendorItemID.ExecuteScalar();
 
-                            if (result != null)
+                            if (VendorItemID != null)
                             {
-                                Console.WriteLine($"Found: {result}");
+                                //Console.WriteLine($"Found in Ariel DB: {VendorItemID}");
+
+
+                                // retrieve ItemID based on VendorItemID
+                                SqlCommand getItemID = new SqlCommand(@"
+                                        SELECT TOP 1 ItemID 
+                                        FROM ItemList 
+                                        WHERE VendorItemID = @VendorItemID", conn);
+                                getItemID.Parameters.AddWithValue("@VendorItemID", VendorItemID);
+                                object ItemID = getItemID.ExecuteScalar();
+                                //Console.WriteLine($"ItemID: {ItemID}");
+
+
+                                //update the quantity of the item in the database
+                                SqlCommand updateQuantity = new SqlCommand(@"
+                                        UPDATE PurchReceiptDetail 
+                                        SET RecQuantity = @Quantity 
+                                        WHERE ItemID = @ItemID", conn);
+                                updateQuantity.Parameters.AddWithValue("@Quantity", part.quantityAvailable.Quantity.value);
+                                updateQuantity.Parameters.AddWithValue("@ItemID", ItemID);
+                                int rowsAffected = updateQuantity.ExecuteNonQuery();
+                                if (rowsAffected > 0)
+                                {
+                                    Console.WriteLine($"Updated quantity for ItemID: {ItemID} to {part.quantityAvailable.Quantity.value}");
+                                }
+                                else
+                                {
+                                    Console.WriteLine($"No rows updated for ItemID: {ItemID}");
+                                }
                             }
                             else
                             {
-                                Console.WriteLine($"Not Found: {normalizedId}");
+                                Console.WriteLine($"Not Found in Ariel DB: {normalizedId}");
                             }
 
-                        }
-                        
-                    }
 
+
+                        }
+                    }
                     // Optional delay to avoid overwhelming the API
                     Thread.Sleep(200);
                 }
