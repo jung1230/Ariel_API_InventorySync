@@ -43,4 +43,4 @@ This file should contain a list of product IDs to request inventory data for.
 ## Contact
 If you have any questions or need assistance, feel free to reach out:
 
-Email: [alanchen20072@gmail.com]
+Email: [chen4126@purdue.edu]
