@@ -115,14 +115,15 @@ class Program
                             {
                                 //Console.WriteLine($"Found in Ariel DB: {VendorItemID}");
 
-
+                                var invoiceNo = "DWA-INV";
                                 //update the quantity of the item in the database
                                 SqlCommand updateQuantity = new SqlCommand(@"
                                         UPDATE PurchReceiptDetail 
                                         SET RecQuantity = @Quantity 
-                                        WHERE ItemID = @ItemID", conn);
+                                        WHERE ItemID = @ItemID and InvoiceNo = @InvoiceNo", conn);
                                 updateQuantity.Parameters.AddWithValue("@Quantity", part.quantityAvailable.Quantity.value);
                                 updateQuantity.Parameters.AddWithValue("@ItemID", matched.Value);
+                                updateQuantity.Parameters.AddWithValue("@InvoiceNo", invoiceNo);
                                 int rowsAffected = updateQuantity.ExecuteNonQuery();
                                 if (rowsAffected > 0)
                                 {
